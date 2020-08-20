@@ -1,0 +1,87 @@
+---
+title: "NBA Home Court Advantage Analysis"
+author: "Jaenic Lee, Karyn Nguyen, Julie Xu"
+
+date: "May 20, 2020"
+output:
+  html_document: default
+  header-includes: \usepackage{color}
+fontsize: 12pt
+margin: 1in
+---
+<!--
+In this file, we will test the theory of Homecourt Advantage. 
+-->
+
+```{r setup, echo=FALSE, message=F, warning=F, include=FALSE}
+
+  # Clear the working space
+    rm(list = ls())
+
+  #Set working directory
+setwd("/Users/karynnguyenMBP/Desktop")
+getwd()
+
+### Load the packages (all must have been installed)
+    library(doBy)
+    library(dplyr)
+    library(foreign)
+    library(ggplot2)
+    library(knitr)
+    library(lmtest)
+    library(readstata13)
+    library(sandwich)
+    library(stargazer)
+    library(AER)
+    library(gdata)
+
+#Functions to calculate corrected standard errors 
+cse=function(reg) {
+rob=sqrt(diag(vcovHC(reg, type="HC1")))
+return(rob)
+}
+```
+#Regressions for Regular Season
+
+```{r regression1, echo=FALSE, warning=FALSE, comment="", include=TRUE}
+
+library(readxl)
+nbadata = read_excel("/Users/karynnguyenMBP/Desktop/NBAdata.xlsx")
+nbadata$avgatt_home = nbadata$avgatt_home/100000
+nbadata$avgatt_away = nbadata$avgatt_away/100000
+
+reg1 = lm(win_home ~(fouls_home-fouls_away), data=nbadata)
+reg2 = lm(win_home ~(fouls_home-fouls_away) + defeff_home, data=nbadata)
+reg3 = lm(win_home ~(fouls_home-fouls_away) + defeff_home + offeff_home, data=nbadata)
+reg4 = lm(win_home ~(fouls_home-fouls_away) + defeff_home + offeff_home + avgatt_home, data=nbadata)
+reg5 = lm(win_home ~defeff_home + offeff_home + avgatt_home, data=nbadata)
+
+stargazer(reg1, reg2, reg3, reg4, reg5, se=list(cse(reg1), cse(reg2), cse(reg3), cse(reg4), cse(reg5)), covariate.labels = c("(Fouls Home - Fouls Away)", "Defensive Efficiency", "Offensive Efficiency", "Average Attendence"), title="Regression of the NBA Winning Percentage for Home Games on Various Variables", type="text",star.cutoffs=NA, df=FALSE, digits=3)
+#produces a table of the results of all the regressions with the standard errors corrected
+
+reg6 = lm(win_away ~(fouls_home-fouls_away), data=nbadata)
+reg7 = lm(win_away ~(fouls_home-fouls_away) + defeff_away, data=nbadata)
+reg8 = lm(win_away ~(fouls_home-fouls_away) + defeff_away + offeff_away, data=nbadata)
+reg9 = lm(win_away ~(fouls_home-fouls_away) + defeff_away + offeff_away + avgatt_away, data=nbadata)
+reg10 = lm(win_away ~defeff_away + offeff_away + avgatt_away, data=nbadata)
+
+stargazer(reg6, reg7, reg8, reg9, reg10, se=list(cse(reg6), cse(reg7), cse(reg8), cse(reg9), cse(reg10)), covariate.labels = c("(Fouls Home - Fouls Away)", "Defensive Efficiency", "Offensive Efficiency", "Average Attendence"), title="Regression of the NBA Winning Percentage for Away Games on Various Variables", type="text",star.cutoffs=NA, df=FALSE, digits=3)
+#produces a table of the results of all the regressions with the standard errors corrected
+
+```
+#Regressions for Championship Games
+
+```{r regression2, echo=FALSE, warning=FALSE, comment="", include=TRUE}
+
+library(readxl)
+nbachampions = read_excel("/Users/karynnguyenMBP/Desktop/NBAChampions.xlsx")
+
+reg9 = lm(win_away ~(fouls_home-fouls_away), data=nbachampions)
+reg10 = lm(win_home ~(fouls_home-fouls_away), data=nbachampions)
+
+stargazer(reg9, reg10, se=list(cse(reg9), cse(reg10)), covariate.labels = c("(Fouls Home - Fouls Away)"), title="Regression of the NBA Championship Games Winning Percentage on Fouls", type="text",star.cutoffs=NA, df=FALSE, digits=3)
+#produces a table of the results of all the regressions with the standard errors corrected
+
+```
+
+&nbsp;
